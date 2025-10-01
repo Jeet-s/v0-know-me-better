@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   View,
   Text,
@@ -10,23 +11,93 @@ import {
   Platform,
   Alert,
 } from "react-native"
-import { useRouter, useLocalSearchParams } from "expo-router"
-import { useState } from "react"
 import { checkAnswersMatch } from "../utils/gameLogic"
 
-export default function GameScreen() {
-  const router = useRouter()
-  const {
-    roomCode,
-    playerName,
-    questions: questionsParam,
-    round: roundParam,
-    score: scoreParam,
-  } = useLocalSearchParams()
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  header: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  roundText: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  progressBar: {
+    width: "80%",
+    height: 20,
+    backgroundColor: "#ddd",
+    borderRadius: 10,
+    overflow: "hidden",
+    marginTop: 10,
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#4caf50",
+  },
+  content: {
+    width: "80%",
+    alignItems: "center",
+  },
+  emoji: {
+    fontSize: 50,
+    marginBottom: 20,
+  },
+  question: {
+    fontSize: 24,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    width: "100%",
+  },
+  input: {
+    height: 100,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  submitButton: {
+    backgroundColor: "#4caf50",
+    padding: 10,
+    borderRadius: 5,
+    width: "100%",
+    alignItems: "center",
+  },
+  submitButtonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 18,
+  },
+  waitingContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  waitingEmoji: {
+    fontSize: 50,
+    marginBottom: 20,
+  },
+  waitingText: {
+    fontSize: 24,
+    textAlign: "center",
+  },
+})
 
-  const questions = JSON.parse(questionsParam as string)
-  const currentRound = Number.parseInt(roundParam as string)
-  const currentScore = Number.parseInt(scoreParam as string)
+export default function GameScreen({ navigation, route }: any) {
+  const { roomCode, playerName, questions, round, score } = route.params
+
+  const currentRound = round
+  const currentScore = score
   const question = questions[currentRound - 1]
 
   const [answer, setAnswer] = useState("")
@@ -52,25 +123,19 @@ export default function GameScreen() {
           text: "Continue",
           onPress: () => {
             if (currentRound < 5) {
-              router.replace({
-                pathname: "/game",
-                params: {
-                  roomCode,
-                  playerName,
-                  questions: questionsParam,
-                  round: (currentRound + 1).toString(),
-                  score: newScore.toString(),
-                },
+              navigation.replace("Game", {
+                roomCode,
+                playerName,
+                questions,
+                round: currentRound + 1,
+                score: newScore,
               })
             } else {
-              router.replace({
-                pathname: "/results",
-                params: {
-                  roomCode,
-                  playerName,
-                  score: newScore.toString(),
-                  total: "5",
-                },
+              navigation.replace("Results", {
+                roomCode,
+                playerName,
+                score: newScore,
+                total: 5,
               })
             }
           },
@@ -124,7 +189,6 @@ export default function GameScreen() {
   )
 }
 
-// Generate mock partner answers
 function generateMockAnswer(question: string): string {
   const mockAnswers: Record<string, string[]> = {
     food: ["Pizza", "Sushi", "Tacos", "Pasta", "Burgers"],
@@ -166,91 +230,3 @@ function generateMockAnswer(question: string): string {
 
   return "Something interesting"
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF5F7",
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  roundText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FF6B9D",
-    marginBottom: 10,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: "#FFE5EC",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#FF6B9D",
-    borderRadius: 4,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emoji: {
-    fontSize: 60,
-    marginBottom: 20,
-  },
-  question: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 40,
-    lineHeight: 32,
-  },
-  inputContainer: {
-    width: "100%",
-    maxWidth: 400,
-    gap: 15,
-  },
-  input: {
-    backgroundColor: "#FFF",
-    padding: 20,
-    borderRadius: 15,
-    fontSize: 16,
-    minHeight: 120,
-    textAlignVertical: "top",
-    borderWidth: 2,
-    borderColor: "#FFE5EC",
-  },
-  submitButton: {
-    backgroundColor: "#FF6B9D",
-    paddingVertical: 16,
-    borderRadius: 15,
-    alignItems: "center",
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFF",
-  },
-  waitingContainer: {
-    alignItems: "center",
-    gap: 15,
-  },
-  waitingEmoji: {
-    fontSize: 48,
-  },
-  waitingText: {
-    fontSize: 18,
-    color: "#999",
-    textAlign: "center",
-  },
-})

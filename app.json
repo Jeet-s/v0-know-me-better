@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Know Me Better",
-    "slug": "couples-vibe",
+    "slug": "know-me-better",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,18 +14,17 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.couplesvibe.knowmebetter"
+      "bundleIdentifier": "com.knowmebetter.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFF5F7"
       },
-      "package": "com.couplesvibe.knowmebetter"
+      "package": "com.knowmebetter.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "scheme": "couplesvibe"
+    }
   }
 }

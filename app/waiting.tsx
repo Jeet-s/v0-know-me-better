@@ -1,261 +1,182 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
-import { LinearGradient } from "expo-linear-gradient"
-import * as Animatable from "react-native-animatable"
-import { socketService } from "@/services/socket"
+import { useEffect, useState } from "react"
+import { getRandomQuestions } from "../data/questions"
 
 export default function WaitingScreen() {
   const router = useRouter()
   const { roomCode, playerName, isHost } = useLocalSearchParams()
-  const [players, setPlayers] = useState<Array<{ name: string; isHost: boolean }>>([
-    { name: playerName as string, isHost: isHost === "true" },
-  ])
-  const [isReady, setIsReady] = useState(false)
+  const [countdown, setCountdown] = useState(3)
+  const [showCountdown, setShowCountdown] = useState(false)
+
+  const players = [playerName as string, "Partner"]
+
+  const handleStartGame = () => {
+    setShowCountdown(true)
+  }
 
   useEffect(() => {
-    // Listen for player joined event
-    socketService.on("playerJoined", (data) => {
-      console.log("[v0] Player joined event:", data)
-      setPlayers(data.players)
-      setIsReady(true)
-    })
-
-    // Listen for game started event
-    socketService.on("gameStarted", (data) => {
-      console.log("[v0] Game started event:", data)
-      router.push({
+    if (showCountdown && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    } else if (showCountdown && countdown === 0) {
+      const questions = getRandomQuestions(5)
+      router.replace({
         pathname: "/game",
         params: {
           roomCode,
           playerName,
-          currentRound: data.currentRound,
-          totalRounds: data.totalRounds,
-          question: data.question,
+          questions: JSON.stringify(questions),
+          round: "1",
+          score: "0",
         },
       })
-    })
-
-    return () => {
-      socketService.off("playerJoined")
-      socketService.off("gameStarted")
     }
-  }, [])
-
-  const handleStartGame = () => {
-    if (players.length !== 2) {
-      Alert.alert("Wait", "Need 2 players to start the game")
-      return
-    }
-
-    socketService.startGame(roomCode as string)
-  }
-
-  const handleCopyCode = () => {
-    Alert.alert("Room Code", `Share this code: ${roomCode}`)
-  }
+  }, [showCountdown, countdown])
 
   return (
-    <LinearGradient colors={["#FFF5F7", "#FFE8EC", "#FFF0F5"]} style={styles.container}>
-      <Animatable.View animation="fadeInDown" duration={800} style={styles.header}>
-        <Text style={styles.emoji}>⏳</Text>
-        <Text style={styles.title}>Waiting Room</Text>
-        <Text style={styles.subtitle}>Get ready to play!</Text>
-      </Animatable.View>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {showCountdown ? (
+          <>
+            <Text style={styles.countdownEmoji}>🎮</Text>
+            <Text style={styles.countdownText}>{countdown}</Text>
+            <Text style={styles.countdownLabel}>Get Ready!</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.emoji}>⏳</Text>
+            <Text style={styles.title}>Waiting Room</Text>
 
-      <Animatable.View animation="fadeIn" delay={200} duration={800} style={styles.codeContainer}>
-        <Text style={styles.codeLabel}>Room Code</Text>
-        <TouchableOpacity style={styles.codeBox} onPress={handleCopyCode}>
-          <Text style={styles.codeText}>{roomCode}</Text>
-        </TouchableOpacity>
-        <Text style={styles.codeHint}>Tap to share</Text>
-      </Animatable.View>
-
-      <Animatable.View animation="fadeInUp" delay={400} duration={800} style={styles.playersContainer}>
-        <Text style={styles.playersTitle}>Players ({players.length}/2)</Text>
-
-        <View style={styles.playersList}>
-          {players.map((player, index) => (
-            <View key={index} style={styles.playerCard}>
-              <Text style={styles.playerEmoji}>{player.isHost ? "👑" : "🎮"}</Text>
-              <Text style={styles.playerName}>{player.name}</Text>
-              {player.isHost && <Text style={styles.hostBadge}>Host</Text>}
+            <View style={styles.codeContainer}>
+              <Text style={styles.codeLabel}>Room Code</Text>
+              <Text style={styles.code}>{roomCode}</Text>
             </View>
-          ))}
 
-          {players.length < 2 && (
-            <View style={styles.emptySlot}>
-              <ActivityIndicator size="large" color="#FF6B9D" />
-              <Text style={styles.emptySlotText}>Waiting for player 2...</Text>
+            <View style={styles.playersContainer}>
+              <Text style={styles.playersTitle}>Players ({players.length}/2)</Text>
+              {players.map((player, index) => (
+                <View key={index} style={styles.playerCard}>
+                  <Text style={styles.playerEmoji}>{index === 0 ? "👤" : "👥"}</Text>
+                  <Text style={styles.playerName}>{player}</Text>
+                </View>
+              ))}
             </View>
-          )}
-        </View>
-      </Animatable.View>
 
-      {isHost === "true" && (
-        <Animatable.View animation="fadeInUp" delay={600} duration={800} style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.startButton, !isReady && styles.startButtonDisabled]}
-            onPress={handleStartGame}
-            disabled={!isReady}
-          >
-            <Text style={styles.startButtonText}>{isReady ? "Start Game" : "Waiting for Player 2..."}</Text>
-          </TouchableOpacity>
-        </Animatable.View>
-      )}
+            <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
+              <Text style={styles.startButtonText}>Start Game 🎮</Text>
+            </TouchableOpacity>
 
-      {isHost !== "true" && (
-        <Animatable.View animation="fadeIn" delay={600} duration={800} style={styles.waitingMessage}>
-          <Text style={styles.waitingText}>Waiting for host to start the game...</Text>
-        </Animatable.View>
-      )}
-    </LinearGradient>
+            <Text style={styles.note}>Note: This is a demo with mock data</Text>
+          </>
+        )}
+      </View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 60,
-    paddingHorizontal: 24,
+    backgroundColor: "#FFF5F7",
+    padding: 20,
   },
-  header: {
+  content: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 30,
   },
   emoji: {
     fontSize: 60,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     color: "#FF6B9D",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#8B5A7C",
+    marginBottom: 30,
   },
   codeContainer: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 20,
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 30,
+    borderWidth: 2,
+    borderColor: "#FFE5EC",
   },
   codeLabel: {
     fontSize: 14,
-    color: "#8B5A7C",
-    marginBottom: 8,
+    color: "#999",
+    marginBottom: 5,
   },
-  codeBox: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "#FFD4E5",
-    marginBottom: 8,
-  },
-  codeText: {
-    fontSize: 32,
+  code: {
+    fontSize: 36,
     fontWeight: "bold",
     color: "#FF6B9D",
-    letterSpacing: 8,
-  },
-  codeHint: {
-    fontSize: 12,
-    color: "#C4A4B7",
-    fontStyle: "italic",
+    letterSpacing: 4,
   },
   playersContainer: {
-    flex: 1,
+    width: "100%",
+    maxWidth: 400,
+    gap: 10,
+    marginBottom: 30,
   },
   playersTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#8B5A7C",
-    marginBottom: 16,
-  },
-  playersList: {
-    gap: 12,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 10,
   },
   playerCard: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    borderRadius: 16,
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 15,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderWidth: 2,
-    borderColor: "#FFD4E5",
+    borderColor: "#FFE5EC",
   },
   playerEmoji: {
     fontSize: 24,
   },
   playerName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: "#333",
-    flex: 1,
-  },
-  hostBadge: {
-    backgroundColor: "#FF6B9D",
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  emptySlot: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    alignItems: "center",
-    gap: 12,
-    borderWidth: 2,
-    borderColor: "#FFD4E5",
-    borderStyle: "dashed",
-  },
-  emptySlotText: {
-    fontSize: 14,
-    color: "#C4A4B7",
-    fontStyle: "italic",
-  },
-  buttonContainer: {
-    marginTop: 20,
   },
   startButton: {
     backgroundColor: "#FF6B9D",
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    alignItems: "center",
-    shadowColor: "#FF6B9D",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  startButtonDisabled: {
-    opacity: 0.5,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 25,
   },
   startButtonText: {
-    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: "#FFF",
   },
-  waitingMessage: {
-    alignItems: "center",
+  note: {
+    fontSize: 12,
+    color: "#999",
     marginTop: 20,
-  },
-  waitingText: {
-    fontSize: 16,
-    color: "#8B5A7C",
     fontStyle: "italic",
+  },
+  countdownEmoji: {
+    fontSize: 80,
+    marginBottom: 30,
+  },
+  countdownText: {
+    fontSize: 120,
+    fontWeight: "bold",
+    color: "#FF6B9D",
+  },
+  countdownLabel: {
+    fontSize: 24,
+    color: "#666",
+    marginTop: 20,
   },
 })

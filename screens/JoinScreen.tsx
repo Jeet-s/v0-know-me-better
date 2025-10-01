@@ -1,13 +1,64 @@
 "use client"
 
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
-import { useRouter, useLocalSearchParams } from "expo-router"
 import { useState } from "react"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
 import { generateRoomCode } from "../utils/gameLogic"
 
-export default function JoinScreen() {
-  const router = useRouter()
-  const { mode } = useLocalSearchParams()
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  backButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  content: {
+    alignItems: "center",
+  },
+  emoji: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  form: {
+    width: "80%",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    width: "100%",
+  },
+  button: {
+    backgroundColor: "#007AFF",
+    borderRadius: 5,
+    padding: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+})
+
+export default function JoinScreen({ navigation, route }: any) {
+  const { mode } = route.params
   const isCreating = mode === "create"
 
   const [playerName, setPlayerName] = useState("")
@@ -26,19 +77,16 @@ export default function JoinScreen() {
 
     const finalRoomCode = isCreating ? generateRoomCode() : roomCode.toUpperCase()
 
-    router.push({
-      pathname: "/waiting",
-      params: {
-        roomCode: finalRoomCode,
-        playerName: playerName.trim(),
-        isHost: isCreating ? "true" : "false",
-      },
+    navigation.navigate("Waiting", {
+      roomCode: finalRoomCode,
+      playerName: playerName.trim(),
+      isHost: isCreating,
     })
   }
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
 
@@ -75,61 +123,3 @@ export default function JoinScreen() {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF5F7",
-    padding: 20,
-  },
-  backButton: {
-    marginTop: 40,
-    marginBottom: 20,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: "#FF6B9D",
-    fontWeight: "600",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emoji: {
-    fontSize: 60,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FF6B9D",
-    marginBottom: 40,
-  },
-  form: {
-    width: "100%",
-    maxWidth: 400,
-    gap: 15,
-  },
-  input: {
-    backgroundColor: "#FFF",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    fontSize: 16,
-    borderWidth: 2,
-    borderColor: "#FFE5EC",
-  },
-  button: {
-    backgroundColor: "#FF6B9D",
-    paddingVertical: 16,
-    borderRadius: 15,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFF",
-  },
-})

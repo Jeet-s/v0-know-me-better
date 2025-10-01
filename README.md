@@ -1,94 +1,84 @@
-# Know Me Better - Couples Vibe App
+# Know Me Better - React Native App
 
-A React Native mobile game where couples answer questions to see how well they know each other!
+A fun couples game where you answer questions together and see how well you know each other!
 
-## Project Structure
+## 🎮 Features
+
+- 80+ curated questions across 8 categories
+- Beautiful pastel UI with smooth animations
+- Mock game flow (no backend required)
+- Share results to social media
+- Vibe titles based on your score
+
+## 🚀 Quick Start
+
+1. **Install dependencies:**
+\`\`\`bash
+npm install
+\`\`\`
+
+2. **Start the app:**
+\`\`\`bash
+npm start
+\`\`\`
+
+3. **Run on your device:**
+   - **iOS**: Scan QR code with Camera app or Expo Go
+   - **Android**: Scan QR code with Expo Go app
+   - Download Expo Go: [iOS](https://apps.apple.com/app/expo-go/id982107779) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+## 📁 Project Structure
 
 \`\`\`
-couples-vibe-app/
-├── app/                    # Expo Router screens
+├── app/                    # Screens (Expo Router)
+│   ├── _layout.tsx        # Root layout (ENTRY POINT)
 │   ├── index.tsx          # Home screen
 │   ├── join.tsx           # Create/Join room
-│   ├── waiting.tsx        # Waiting room
+│   ├── waiting.tsx        # Waiting room with countdown
 │   ├── game.tsx           # Game screen
-│   └── results.tsx        # Results screen
-├── backend/               # Node.js backend
-│   ├── server.js          # Express + Socket.IO server
-│   ├── models/            # MongoDB models
-│   ├── services/          # LLM and game logic
-│   └── data/              # Question bank
-├── services/              # Frontend services
-│   └── socket.ts          # Socket.IO client
-└── components/            # Reusable components
+│   └── results.tsx        # Results with vibe title
+├── data/
+│   ├── questions.ts       # Question bank (80+ questions)
+│   └── vibes.ts          # Vibe titles and scoring
+├── utils/
+│   └── gameLogic.ts      # Game logic and matching
+├── package.json           # Dependencies
+└── app.json              # Expo configuration
 \`\`\`
 
-## Setup Instructions
+## 🎯 How It Works
 
-### Frontend (React Native)
+This is a standalone demo version with mock data:
+- Partner answers are simulated
+- Answer matching uses simple text comparison
+- No real-time multiplayer (yet!)
 
-1. Install dependencies:
-\`\`\`bash
-npm install
-\`\`\`
+## 🛠️ Tech Stack
 
-2. Update the backend URL in `services/socket.ts`:
-\`\`\`typescript
-const SOCKET_URL = 'http://YOUR_IP:3001'; // Use your local IP for testing on device
-\`\`\`
+- **React Native** - Mobile framework
+- **Expo Router** - File-based navigation
+- **TypeScript** - Type safety
+- **Expo Go** - Development client
 
-3. Start the Expo development server:
-\`\`\`bash
-npm start
-\`\`\`
+## 📱 Entry Point
 
-4. Scan the QR code with Expo Go app (iOS/Android)
+The app uses **Expo Router** for navigation:
+- **Entry point**: `app/_layout.tsx` (root layout)
+- **Home screen**: `app/index.tsx`
+- **Navigation**: File-based (no App.jsx needed)
 
-### Backend (Node.js)
+## 🔮 Future Enhancements
 
-1. Navigate to backend directory:
-\`\`\`bash
-cd backend
-npm install
-\`\`\`
+- Real multiplayer with Socket.IO
+- Backend integration for persistent rooms
+- LLM-powered answer matching
+- More question categories
+- Custom question creation
+- User accounts and history
 
-2. Create `.env` file:
-\`\`\`
-PORT=3001
-MONGODB_URI=mongodb://localhost:27017/couples-vibe
-OPENAI_API_KEY=your_openai_api_key_here
-\`\`\`
+## 📝 Notes
 
-3. Start the backend server:
-\`\`\`bash
-npm start
-\`\`\`
-
-## Features
-
-- Real-time multiplayer game using Socket.IO
-- AI-powered answer matching using LLM
-- 100 curated questions across 8 categories
-- Beautiful pastel UI with animations
-- Share results to social media
-- Fun "vibe titles" based on scores
-
-## Tech Stack
-
-**Frontend:**
-- React Native (Expo)
-- Expo Router for navigation
-- Socket.IO client for real-time communication
-- React Native Animatable for animations
-
-**Backend:**
-- Node.js + Express
-- Socket.IO for WebSocket communication
-- MongoDB for data persistence
-- OpenAI API for answer judging
-
-## Next Steps
-
-1. Set up MongoDB locally or use MongoDB Atlas
-2. Get an OpenAI API key
-3. Test the app on your device using Expo Go
-4. Customize questions in `backend/data/questions.json`
+- This is a React Native app (not Next.js)
+- Some Next.js files exist for v0 preview only
+- The actual mobile app only uses `app/`, `data/`, and `utils/` folders
+- See `PROJECT_STRUCTURE.md` for detailed file organization

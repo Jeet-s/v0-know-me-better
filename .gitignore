@@ -1,27 +1,68 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
 
-# dependencies
-/node_modules
+# Expo
+.expo/
+.expo-shared/
+dist/
+we```gitignore file=".gitignore"
+# Dependencies
+node_modules/
 
-# next.js
-/.next/
-/out/
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
 
-# production
-/build
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.ipa
+*.apk
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# Metro
+.metro-health-check*
 
-# env files
-.env*
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
 
-# vercel
-.vercel
+# OS
+.DS_Store
+*.pem
 
-# typescript
+# Environment
+.env
+.env*.local
+
+# TypeScript
 *.tsbuildinfo
-next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# v0 Preview (Next.js files - not part of React Native app)
+components/
+hooks/
+lib/
+public/
+styles/
+app/layout.tsx
+app/globals.css
+next.config.mjs
+postcss.config.mjs
+components.json
+pnpm-lock.yaml
