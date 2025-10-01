@@ -123,35 +123,32 @@ export default function GameScreen({ navigation, route }: any) {
       const newScore = isMatch ? currentScore + 1 : currentScore
 
       if (currentRound < 5) {
+        console.log(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`)
         // Show quick feedback
-        Alert.alert(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`, [
-          {
-            text: "Next Question",
-            onPress: () => {
-              navigation.push("Game", {
+        setTimeout(() => {
+
+navigation.push("Game", {
                 roomCode,
                 playerName,
                 questions,
                 round: currentRound + 1,
                 score: newScore,
               })
-            },
-          },
-        ])
+        }, 5000);
+        
       } else {
-        Alert.alert(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`, [
-          {
-            text: "See Results",
-            onPress: () => {
-              navigation.replace("Results", {
+        console.log(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`)
+        // Show quick feedback
+        setTimeout(() => {
+navigation.replace("Results", {
                 roomCode,
                 playerName,
                 score: newScore,
                 total: 5,
               })
-            },
-          },
-        ])
+          
+        }, 5000);
+        
       }
     }, 1500)
   }
