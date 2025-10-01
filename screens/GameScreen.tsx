@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -103,6 +103,11 @@ export default function GameScreen({ navigation, route }: any) {
   const [answer, setAnswer] = useState("")
   const [submitted, setSubmitted] = useState(false)
 
+  useEffect(() => {
+    setAnswer("")
+    setSubmitted(false)
+  }, [currentRound])
+
   const handleSubmit = () => {
     if (!answer.trim()) {
       Alert.alert("Error", "Please enter an answer")
@@ -117,30 +122,37 @@ export default function GameScreen({ navigation, route }: any) {
       const isMatch = checkAnswersMatch(answer.trim(), partnerAnswer)
       const newScore = isMatch ? currentScore + 1 : currentScore
 
-      // Show result briefly
-      Alert.alert(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`, [
-        {
-          text: "Continue",
-          onPress: () => {
-            if (currentRound < 5) {
-              navigation.replace("Game", {
+      if (currentRound < 5) {
+        // Show quick feedback
+        Alert.alert(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`, [
+          {
+            text: "Next Question",
+            onPress: () => {
+              navigation.push("Game", {
                 roomCode,
                 playerName,
                 questions,
                 round: currentRound + 1,
                 score: newScore,
               })
-            } else {
+            },
+          },
+        ])
+      } else {
+        Alert.alert(isMatch ? "Match! 🎉" : "Different answers", `You: ${answer.trim()}\nPartner: ${partnerAnswer}`, [
+          {
+            text: "See Results",
+            onPress: () => {
               navigation.replace("Results", {
                 roomCode,
                 playerName,
                 score: newScore,
                 total: 5,
               })
-            }
+            },
           },
-        },
-      ])
+        ])
+      }
     }, 1500)
   }
 

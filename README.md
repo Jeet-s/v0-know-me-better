@@ -12,6 +12,15 @@ A fun couples game where you answer questions together and see how well you know
 
 ## 🚀 Quick Start
 
+### Option 1: Run in Snack (Easiest!)
+
+1. Go to [snack.expo.dev](https://snack.expo.dev)
+2. Create a new Snack
+3. Copy all files from this project into Snack
+4. The app will automatically run!
+
+### Option 2: Run Locally
+
 1. **Install dependencies:**
 \`\`\`bash
 npm install
@@ -30,20 +39,19 @@ npm start
 ## 📁 Project Structure
 
 \`\`\`
-├── app/                    # Screens (Expo Router)
-│   ├── _layout.tsx        # Root layout (ENTRY POINT)
-│   ├── index.tsx          # Home screen
-│   ├── join.tsx           # Create/Join room
-│   ├── waiting.tsx        # Waiting room with countdown
-│   ├── game.tsx           # Game screen
-│   └── results.tsx        # Results with vibe title
+├── App.tsx                # Main entry point with navigation
+├── screens/               # All app screens
+│   ├── HomeScreen.tsx    # Home screen
+│   ├── JoinScreen.tsx    # Create/Join room
+│   ├── WaitingScreen.tsx # Waiting room with countdown
+│   ├── GameScreen.tsx    # Game screen
+│   └── ResultsScreen.tsx # Results with vibe title
 ├── data/
-│   ├── questions.ts       # Question bank (80+ questions)
+│   ├── questions.ts      # Question bank (80+ questions)
 │   └── vibes.ts          # Vibe titles and scoring
 ├── utils/
 │   └── gameLogic.ts      # Game logic and matching
-├── package.json           # Dependencies
-└── app.json              # Expo configuration
+└── package.json          # Dependencies
 \`\`\`
 
 ## 🎯 How It Works
@@ -56,16 +64,16 @@ This is a standalone demo version with mock data:
 ## 🛠️ Tech Stack
 
 - **React Native** - Mobile framework
-- **Expo Router** - File-based navigation
+- **React Navigation** - Navigation library
 - **TypeScript** - Type safety
-- **Expo Go** - Development client
+- **Expo** - Development platform
 
 ## 📱 Entry Point
 
-The app uses **Expo Router** for navigation:
-- **Entry point**: `app/_layout.tsx` (root layout)
-- **Home screen**: `app/index.tsx`
-- **Navigation**: File-based (no App.jsx needed)
+The app uses **React Navigation**:
+- **Entry point**: `App.tsx` (main navigation setup)
+- **Home screen**: `screens/HomeScreen.tsx`
+- **Navigation**: Stack navigator with 5 screens
 
 ## 🔮 Future Enhancements
 
@@ -78,7 +86,7 @@ The app uses **Expo Router** for navigation:
 
 ## 📝 Notes
 
-- This is a React Native app (not Next.js)
-- Some Next.js files exist for v0 preview only
-- The actual mobile app only uses `app/`, `data/`, and `utils/` folders
-- See `PROJECT_STRUCTURE.md` for detailed file organization
+- This app is compatible with Expo Snack
+- Uses React Navigation for routing
+- All screens are in the `screens/` folder
+- Mock data simulates partner responses
