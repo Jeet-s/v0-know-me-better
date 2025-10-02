@@ -2,155 +2,145 @@ export default function Page() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2rem",
-        background: "linear-gradient(135deg, #FFF5F7 0%, #FFE5EC 100%)",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        maxWidth: "800px",
+        margin: "0 auto",
+        padding: "40px 20px",
+        lineHeight: "1.6",
       }}
     >
+      <h1 style={{ fontSize: "32px", marginBottom: "20px" }}>Know Me Better 💕</h1>
+
       <div
         style={{
-          maxWidth: "700px",
-          textAlign: "center",
-          background: "white",
-          padding: "3rem",
-          borderRadius: "20px",
-          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          background: "#FFF5F7",
+          padding: "20px",
+          borderRadius: "8px",
+          marginBottom: "30px",
         }}
       >
-        <div style={{ fontSize: "80px", marginBottom: "1rem" }}>💕</div>
-        <h1
-          style={{
-            fontSize: "2.5rem",
-            fontWeight: "bold",
-            color: "#FF6B9D",
-            marginBottom: "1rem",
-          }}
-        >
-          Know Me Better
-        </h1>
-        <p
-          style={{
-            fontSize: "1.25rem",
-            color: "#666",
-            marginBottom: "2rem",
-          }}
-        >
-          React Native Mobile App
+        <h2 style={{ fontSize: "20px", marginBottom: "10px" }}>📱 This is a React Native App</h2>
+        <p>
+          This project is built with React Native and Expo, not Next.js. To run it, you need to use the Expo development
+          environment.
         </p>
-        <div
-          style={{
-            background: "#FFF5F7",
-            padding: "2rem",
-            borderRadius: "15px",
-            marginBottom: "1.5rem",
-            textAlign: "left",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "1.25rem",
-              fontWeight: "600",
-              color: "#FF6B9D",
-              marginBottom: "1rem",
-            }}
-          >
-            🚀 Getting Started
-          </h2>
-          <ol
-            style={{
-              color: "#333",
-              lineHeight: "2",
-              paddingLeft: "1.5rem",
-              margin: 0,
-            }}
-          >
-            <li>
-              Install dependencies:{" "}
-              <code
-                style={{
-                  background: "#FFE5EC",
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: "4px",
-                  fontFamily: "monospace",
-                }}
-              >
-                npm install
-              </code>
-            </li>
-            <li>
-              Start Expo:{" "}
-              <code
-                style={{
-                  background: "#FFE5EC",
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: "4px",
-                  fontFamily: "monospace",
-                }}
-              >
-                npm start
-              </code>
-            </li>
-            <li>Scan QR code with Expo Go app on your phone</li>
-            <li>Play the game with your partner! 💑</li>
-          </ol>
-        </div>
-        <div
-          style={{
-            background: "#FFF9E6",
-            padding: "1rem",
-            borderRadius: "10px",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "#666",
-              margin: 0,
-            }}
-          >
-            📱 <strong>Download Expo Go:</strong>{" "}
-            <a
-              href="https://apps.apple.com/app/expo-go/id982107779"
-              style={{ color: "#FF6B9D", textDecoration: "none" }}
-            >
-              iOS
-            </a>{" "}
-            |{" "}
-            <a
-              href="https://play.google.com/store/apps/details?id=host.exp.exponent"
-              style={{ color: "#FF6B9D", textDecoration: "none" }}
-            >
-              Android
-            </a>
-          </p>
-        </div>
-        <div
-          style={{
-            fontSize: "0.875rem",
-            color: "#999",
-            lineHeight: "1.6",
-          }}
-        >
-          <p style={{ margin: "0.5rem 0" }}>
-            ✨ <strong>Features:</strong> 80+ questions, beautiful UI, mock gameplay
-          </p>
-          <p style={{ margin: "0.5rem 0" }}>
-            🛠️ <strong>Tech:</strong> React Native, Expo Router, TypeScript
-          </p>
-          <p style={{ margin: "0.5rem 0" }}>
-            📖 See{" "}
-            <code style={{ background: "#FFE5EC", padding: "0.2rem 0.4rem", borderRadius: "3px" }}>README.md</code> and{" "}
-            <code style={{ background: "#FFE5EC", padding: "0.2rem 0.4rem", borderRadius: "3px" }}>
-              PROJECT_STRUCTURE.md
-            </code>{" "}
-            for details
-          </p>
-        </div>
       </div>
+
+      <h2 style={{ fontSize: "24px", marginBottom: "15px" }}>🚀 How to Run</h2>
+
+      <h3 style={{ fontSize: "18px", marginTop: "20px", marginBottom: "10px" }}>1. Install Dependencies</h3>
+      <pre
+        style={{
+          background: "#f5f5f5",
+          padding: "15px",
+          borderRadius: "5px",
+          overflow: "auto",
+        }}
+      >
+        <code>npm install</code>
+      </pre>
+
+      <h3 style={{ fontSize: "18px", marginTop: "20px", marginBottom: "10px" }}>2. Start the Backend Server</h3>
+      <pre
+        style={{
+          background: "#f5f5f5",
+          padding: "15px",
+          borderRadius: "5px",
+          overflow: "auto",
+        }}
+      >
+        <code>{`cd backend
+npm install
+npm run dev`}</code>
+      </pre>
+
+      <h3 style={{ fontSize: "18px", marginTop: "20px", marginBottom: "10px" }}>3. Start the Expo App</h3>
+      <pre
+        style={{
+          background: "#f5f5f5",
+          padding: "15px",
+          borderRadius: "5px",
+          overflow: "auto",
+        }}
+      >
+        <code>npm start</code>
+      </pre>
+
+      <h3 style={{ fontSize: "18px", marginTop: "20px", marginBottom: "10px" }}>4. Run on Device</h3>
+      <ul style={{ marginLeft: "20px" }}>
+        <li>
+          <strong>iOS:</strong> Press <code>i</code> in the terminal or scan QR code with Camera app
+        </li>
+        <li>
+          <strong>Android:</strong> Press <code>a</code> in the terminal or scan QR code with Expo Go app
+        </li>
+        <li>
+          <strong>Web:</strong> Press <code>w</code> in the terminal (limited functionality)
+        </li>
+      </ul>
+
+      <h2 style={{ fontSize: "24px", marginTop: "30px", marginBottom: "15px" }}>📋 Project Structure</h2>
+      <pre
+        style={{
+          background: "#f5f5f5",
+          padding: "15px",
+          borderRadius: "5px",
+          overflow: "auto",
+          fontSize: "14px",
+        }}
+      >
+        <code>{`├── App.tsx                 # React Navigation setup
+├── screens/                # React Native screens
+│   ├── HomeScreen.tsx
+│   ├── JoinScreen.tsx
+│   ├── WaitingScreen.tsx
+│   ├── GameScreen.tsx
+│   └── ResultsScreen.tsx
+├── services/               # Services
+│   └── socket.ts          # Socket.IO client
+├── data/                   # Game data
+│   ├── questions.ts
+│   └── vibes.ts
+├── backend/                # Backend server
+│   ├── server.ts          # Socket.IO server
+│   └── ai-matcher.ts      # AI-powered matching
+└── package.json`}</code>
+      </pre>
+
+      <h2 style={{ fontSize: "24px", marginTop: "30px", marginBottom: "15px" }}>✨ Features</h2>
+      <ul style={{ marginLeft: "20px" }}>
+        <li>Real-time multiplayer game using Socket.IO</li>
+        <li>AI-powered answer matching with OpenAI</li>
+        <li>80+ questions about preferences and personality</li>
+        <li>Vibe compatibility scoring</li>
+        <li>Room-based system with join codes</li>
+      </ul>
+
+      <div
+        style={{
+          background: "#FFF5F7",
+          padding: "20px",
+          borderRadius: "8px",
+          marginTop: "30px",
+        }}
+      >
+        <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>⚙️ Environment Setup</h3>
+        <p>Make sure to set up your OpenAI API key in the backend:</p>
+        <pre
+          style={{
+            background: "#fff",
+            padding: "10px",
+            borderRadius: "5px",
+            marginTop: "10px",
+          }}
+        >
+          <code>OPENAI_API_KEY=your_api_key_here</code>
+        </pre>
+      </div>
+
+      <p style={{ marginTop: "30px", color: "#666" }}>
+        For more details, check out the <code>README.md</code> and <code>SETUP.md</code> files.
+      </p>
     </div>
   )
 }
