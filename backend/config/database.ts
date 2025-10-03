@@ -1,6 +1,10 @@
 import mongoose from "mongoose"
 
 export const connectDatabase = async () => {
+  if (process.env.SKIP_DB === "1" || process.env.SKIP_DB === "true") {
+    console.log("[v0] SKIP_DB is set; skipping MongoDB connection")
+    return
+  }
   try {
     const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/couples-vibe"
 
