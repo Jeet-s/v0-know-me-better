@@ -206,6 +206,7 @@ io.on("connection", (socket) => {
 
   // Create a new game room
   socket.on("create-room", (data: { playerName: string; userId?: string }) => {
+    console.log("[v0] Creating room:", data)
     const roomCode = generateRoomCode()
     const player: Player = {
       id: "1",
@@ -237,6 +238,7 @@ io.on("connection", (socket) => {
 
   // Join an existing room
   socket.on("join-room", (data: { roomCode: string; playerName: string; userId?: string }) => {
+    console.log("[v0] Joining room:", data)
     const room = rooms.get(data.roomCode.toUpperCase())
 
     if (!room) {
