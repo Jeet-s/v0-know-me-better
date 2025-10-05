@@ -14,11 +14,21 @@ import PartnersListScreen from "./screens/PartnersListScreen"
 import PartnerProfileScreen from "./screens/PartnerProfileScreen"
 import DailyChallengeScreen from "./screens/DailyChallengeScreen"
 import ThemeSelectionScreen from "./screens/ThemeSelectionScreen"
+import { useEffect } from "react"
+import socketService from "./services/socket"
 
 const Stack = createNativeStackNavigator()
 
 function AppNavigator() {
   const { isAuthenticated, loading } = useAuth()
+
+  useEffect(() => {
+    socketService.connect()
+
+    return () => {
+      socketService.disconnect()
+    }
+  }, [])
 
   if (loading) {
     return (

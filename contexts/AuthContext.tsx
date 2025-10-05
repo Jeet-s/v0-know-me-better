@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Configure Google Sign-In
     GoogleSignin.configure({
-      webClientId: "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com", // Replace with your web client ID
+      webClientId: "79127726549-eeb11vopajijhboc7ogmc2bp5pvdkckg.apps.googleusercontent.com", // Replace with your web client ID
       offlineAccess: true,
     })
 

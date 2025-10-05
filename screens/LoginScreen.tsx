@@ -40,10 +40,6 @@ export default function LoginScreen() {
             <Text style={styles.featureEmoji}>💌</Text>
             <Text style={styles.featureText}>Send daily challenges</Text>
           </View>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureEmoji}>📊</Text>
-            <Text style={styles.featureText}>Track your game history</Text>
-          </View>
         </View>
 
         <TouchableOpacity

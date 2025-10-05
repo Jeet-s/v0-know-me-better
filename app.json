@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFF5F7"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.knowmebetter.app"
@@ -25,6 +27,11 @@
     },
     "web": {
       "favicon": null
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5a79e1f7-f9e6-45e4-a4df-355c32090829"
+      }
     }
   }
 }

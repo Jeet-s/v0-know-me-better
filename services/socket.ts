@@ -1,6 +1,6 @@
 import { io, type Socket } from "socket.io-client"
 
-const SOCKET_URL = "http://localhost:3001"
+const SOCKET_URL = "https://v0-know-me-better-y8fz.vercel.app"
 
 interface RoundCompleteData {
   player1Answer: string
@@ -23,7 +23,10 @@ class SocketService {
   private socket: Socket | null = null
 
   connect() {
-    if (this.socket?.connected) return this.socket
+    console.log("[v0] Connecting to socket:", SOCKET_URL)
+    if (this.socket?.connected) return this.socket;
+
+
 
     this.socket = io(SOCKET_URL, {
       transports: ["websocket"],
@@ -31,6 +34,8 @@ class SocketService {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     })
+
+    console.log("[v0] Socket :", this.socket)
 
     this.socket.on("connect", () => {
       console.log("[v0] Socket connected:", this.socket?.id)

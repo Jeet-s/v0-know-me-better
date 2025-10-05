@@ -12,13 +12,7 @@ export default function HomeScreen({ navigation }: any) {
   const scaleAnim = useRef(new Animated.Value(0.9)).current
   const floatAnim = useRef(new Animated.Value(0)).current
 
-  useEffect(() => {
-    socketService.connect()
 
-    return () => {
-      socketService.disconnect()
-    }
-  }, [])
 
   useEffect(() => {
     Animated.parallel([

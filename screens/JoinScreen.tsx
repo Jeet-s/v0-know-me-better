@@ -17,6 +17,7 @@ export default function JoinScreen({ navigation, route }: any) {
   const fadeAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
+    console.log("[v0] Room code:", roomCode)
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
