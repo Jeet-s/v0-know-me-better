@@ -205,7 +205,7 @@ io.on("connection", (socket) => {
   console.log("[v0] User connected:", socket.id)
 
   // Create a new game room
-  socket.on("create-room", (data: { playerName: string; userId?: string }) => {
+  socket.on("create-room", (data: { playerName: string; userId?: string; theme?: string }) => {
     console.log("[v0] Creating room:", data)
     const roomCode = generateRoomCode()
     const player: Player = {
@@ -226,13 +226,13 @@ io.on("connection", (socket) => {
       gameStarted: false,
       matchExplanations: [],
       disconnectedPlayers: new Map(),
-      theme: undefined,
+      theme: data.theme,
     }
 
     rooms.set(roomCode, room)
     socket.join(roomCode)
 
-    console.log("[v0] Room created:", roomCode)
+    console.log("[v0] Room created:", roomCode, "with theme:", data.theme)
     socket.emit("room-created", { roomCode, player })
   })
 
@@ -521,6 +521,22 @@ io.on("connection", (socket) => {
 
     // Notify all players in the room
     io.to(data.roomCode).emit("theme-selected", { theme: data.theme })
+  })
+
+  // Request current room state
+  socket.on("get-room-state", (data: { roomCode: string }) => {
+    const room = rooms.get(data.roomCode)
+    if (!room) {
+      socket.emit("error", { message: "Room not found" })
+      return
+    }
+
+    console.log("[v0] Sending room state for:", data.roomCode)
+    socket.emit("room-state", {
+      players: room.players,
+      theme: room.theme,
+      gameStarted: room.gameStarted,
+    })
   })
 })
 
