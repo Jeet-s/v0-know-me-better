@@ -22,6 +22,23 @@ router.get("/", authenticateToken, async (req: AuthRequest, res) => {
       const isUserA = relation.userA._id.toString() === userId
       const partner = isUserA ? relation.userB : relation.userA
 
+      // Check if there's a pending challenge for this user
+      let hasPendingChallenge = false
+      if (relation.dailyChallengeQuestion && !relation.dailyChallengeCompleted) {
+        // Check if challenge is still valid (within 24 hours)
+        const challengeDate = relation.dailyChallengeDate
+        if (challengeDate) {
+          const now = new Date()
+          const hoursDiff = (now.getTime() - challengeDate.getTime()) / (1000 * 60 * 60)
+          
+          if (hoursDiff <= 24) {
+            // Check if current user hasn't answered yet
+            const userAnswered = isUserA ? !!relation.dailyChallengeAnswerA : !!relation.dailyChallengeAnswerB
+            hasPendingChallenge = !userAnswered
+          }
+        }
+      }
+
       return {
         partnerId: partner._id,
         partnerName: (partner as any).name,
@@ -29,6 +46,7 @@ router.get("/", authenticateToken, async (req: AuthRequest, res) => {
         gamesPlayed: relation.gamesPlayed,
         streak: relation.streak,
         lastPlayed: relation.lastPlayed,
+        hasPendingChallenge,
       }
     })
 
