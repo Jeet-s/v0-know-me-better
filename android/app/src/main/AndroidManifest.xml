@@ -25,6 +25,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.knowmebetter.app"/>
+        <data android:scheme="exp+know-me-better"/>
       </intent-filter>
     </activity>
   </application>

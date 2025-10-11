@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { useAuth } from "../contexts/AuthContext"
 
@@ -22,10 +22,15 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient colors={["#FF6B9D", "#A855F7", "#06B6D4"]} style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.emoji}>💕</Text>
-        <Text style={styles.title}>Know Me Better</Text>
-        <Text style={styles.subtitle}>Sign in to save your games and track your vibes with partners</Text>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Text style={styles.emoji}>💕</Text>
+          <Text style={styles.title}>Know Me Better</Text>
+          <Text style={styles.subtitle}>Sign in to save your games and track your vibes with partners</Text>
 
         <View style={styles.features}>
           <View style={styles.featureItem}>
@@ -58,8 +63,9 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.disclaimer}>Free forever • No subscriptions • No ads</Text>
-      </View>
+          <Text style={styles.disclaimer}>Free forever • No subscriptions • No ads</Text>
+        </View>
+      </ScrollView>
     </LinearGradient>
   )
 }
@@ -67,12 +73,17 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   content: {
     alignItems: "center",
-    width: "90%",
+    width: "100%",
     maxWidth: 400,
   },
   emoji: {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Alert } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Alert, ScrollView } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import socketService from "../services/socket"
 
@@ -13,6 +13,9 @@ export default function WaitingScreen({ navigation, route }: any) {
   const [currentTheme, setCurrentTheme] = useState(selectedTheme || null)
   const fadeAnim = useRef(new Animated.Value(0)).current
   const pulseAnim = useRef(new Animated.Value(1)).current
+
+  // Debug logging
+  console.log("[v0] WaitingScreen - isHost:", isHost, "playerName:", playerName)
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -36,6 +39,17 @@ export default function WaitingScreen({ navigation, route }: any) {
       ]),
     ).start()
 
+    // Request current room state when component loads
+    socketService.getRoomState(roomCode)
+
+    socketService.onRoomState((data) => {
+      console.log("[v0] Room state received:", data)
+      setPlayers(data.players)
+      if (data.theme) {
+        setCurrentTheme(data.theme)
+      }
+    })
+
     socketService.onPlayerJoined((data) => {
       console.log("[v0] Player joined event:", data)
       setPlayers(data.players)
@@ -55,6 +69,7 @@ export default function WaitingScreen({ navigation, route }: any) {
         questions: data.questions,
         currentRound: data.currentRound,
         theme: data.theme,
+        answerer: data.answerer,
       })
     })
 
@@ -65,21 +80,14 @@ export default function WaitingScreen({ navigation, route }: any) {
     })
 
     return () => {
+      socketService.off("room-state")
       socketService.off("player-joined")
       socketService.off("theme-selected")
       socketService.off("game-started")
       socketService.off("player-left")
     }
-  }, [])
+  }, [roomCode, playerId]) // Add dependencies to re-establish listeners when room changes
 
-  const handleSelectTheme = () => {
-    navigation.navigate("ThemeSelection", {
-      roomCode,
-      playerName,
-      playerId,
-      isHost,
-    })
-  }
 
   const handleStartGame = () => {
     if (players.length < 2) {
@@ -106,19 +114,28 @@ export default function WaitingScreen({ navigation, route }: any) {
 
   return (
     <LinearGradient colors={["#FF6B9D", "#A855F7", "#06B6D4"]} style={styles.container}>
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        {showCountdown ? (
-          <>
-            <Animated.Text style={[styles.countdownEmoji, { transform: [{ scale: pulseAnim }] }]}>🎮</Animated.Text>
-            <Text style={styles.countdownText}>{countdown}</Text>
-            <Text style={styles.countdownLabel}>Get Ready!</Text>
-          </>
-        ) : (
-          <>
-            <Animated.Text style={[styles.emoji, { transform: [{ scale: pulseAnim }] }]}>
-              {players.length < 2 ? "⏳" : "✨"}
-            </Animated.Text>
-            <Text style={styles.title}>Waiting Room</Text>
+      {showCountdown ? (
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          <Animated.Text style={[styles.countdownEmoji, { transform: [{ scale: pulseAnim }] }]}>🎮</Animated.Text>
+          <Text style={styles.countdownText}>{countdown}</Text>
+          <Text style={styles.countdownLabel}>Get Ready!</Text>
+        </Animated.View>
+      ) : (
+        <>
+          <View style={styles.header}>
+            <Animated.View style={{ opacity: fadeAnim }}>
+              <Animated.Text style={[styles.emoji, { transform: [{ scale: pulseAnim }] }]}>
+                {players.length < 2 ? "⏳" : "✨"}
+              </Animated.Text>
+              <Text style={styles.title}>Waiting Room</Text>
+            </Animated.View>
+          </View>
+
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
 
             <View style={styles.codeCard}>
               <Text style={styles.codeLabel}>Room Code</Text>
@@ -157,28 +174,20 @@ export default function WaitingScreen({ navigation, route }: any) {
             </View>
 
             {isHost && (
-              <>
-                {!currentTheme && (
-                  <TouchableOpacity style={styles.themeButton} onPress={handleSelectTheme} activeOpacity={0.8}>
-                    <Text style={styles.themeButtonText}>Select Theme ✨</Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={[styles.startButton, (players.length < 2 || !currentTheme) && styles.startButtonDisabled]}
-                  onPress={handleStartGame}
-                  activeOpacity={0.8}
-                  disabled={players.length < 2 || !currentTheme}
-                >
-                  <Text style={styles.startButtonText}>
-                    {players.length < 2
-                      ? "Waiting for Partner..."
-                      : !currentTheme
-                        ? "Select Theme First"
-                        : "Start Game 🚀"}
-                  </Text>
-                </TouchableOpacity>
-              </>
+              <TouchableOpacity
+                style={[styles.startButton, (players.length < 2 || !currentTheme) && styles.startButtonDisabled]}
+                onPress={handleStartGame}
+                activeOpacity={0.8}
+                disabled={players.length < 2 || !currentTheme}
+              >
+                <Text style={styles.startButtonText}>
+                  {players.length < 2
+                    ? "Waiting for Partner..."
+                    : !currentTheme
+                      ? "Theme Loading..."
+                      : "Start Game 🚀"}
+                </Text>
+              </TouchableOpacity>
             )}
 
             {!isHost && (
@@ -186,9 +195,9 @@ export default function WaitingScreen({ navigation, route }: any) {
                 <Text style={styles.note}>Waiting for host to start the game...</Text>
               </View>
             )}
-          </>
-        )}
-      </Animated.View>
+          </ScrollView>
+        </>
+      )}
     </LinearGradient>
   )
 }
@@ -196,23 +205,36 @@ export default function WaitingScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 16,
     alignItems: "center",
   },
   content: {
+    flex: 1,
     alignItems: "center",
-    width: "90%",
+    justifyContent: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   emoji: {
-    fontSize: 80,
-    marginBottom: 16,
+    fontSize: 64,
+    marginBottom: 12,
+    textAlign: "center",
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "900",
     color: "#FFFFFF",
-    marginBottom: 32,
+    marginBottom: 16,
     letterSpacing: -1,
+    textAlign: "center",
   },
   codeCard: {
     backgroundColor: "#FFFFFF",
@@ -375,20 +397,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     color: "#FFFFFF",
-  },
-  themeButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 20,
-    padding: 16,
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.5)",
-  },
-  themeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
   },
 })

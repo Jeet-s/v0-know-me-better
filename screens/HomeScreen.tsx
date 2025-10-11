@@ -1,16 +1,25 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView } from "react-native"
+import { useEffect, useRef, useState } from "react"
+import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { useAuth } from "../contexts/AuthContext"
 import socketService from "../services/socket"
+import { partnersAPI } from "../services/api"
+
+interface Partner {
+  partnerId: string
+  partnerName: string
+  hasPendingChallenge: boolean
+}
 
 export default function HomeScreen({ navigation }: any) {
   const { user, signOut } = useAuth()
   const fadeAnim = useRef(new Animated.Value(0)).current
   const scaleAnim = useRef(new Animated.Value(0.9)).current
   const floatAnim = useRef(new Animated.Value(0)).current
+  const [pendingChallenges, setPendingChallenges] = useState<Partner[]>([])
+  const [loadingChallenges, setLoadingChallenges] = useState(true)
 
 
 
@@ -44,7 +53,22 @@ export default function HomeScreen({ navigation }: any) {
         }),
       ]),
     ).start()
+
+    // Load pending challenges
+    loadPendingChallenges()
   }, [])
+
+  const loadPendingChallenges = async () => {
+    try {
+      const response = await partnersAPI.getPartners()
+      const withPendingChallenges = response.partners.filter((p: any) => p.hasPendingChallenge)
+      setPendingChallenges(withPendingChallenges)
+    } catch (error) {
+      console.error("[v0] Load pending challenges error:", error)
+    } finally {
+      setLoadingChallenges(false)
+    }
+  }
 
   return (
     <LinearGradient colors={["#FF6B9D", "#A855F7", "#06B6D4"]} style={styles.container}>
@@ -81,6 +105,42 @@ export default function HomeScreen({ navigation }: any) {
 
           <Text style={styles.title}>Know Me Better</Text>
           <Text style={styles.subtitle}>Discover how in sync you really are</Text>
+
+          {/* Pending Challenges Section */}
+          {!loadingChallenges && pendingChallenges.length > 0 && (
+            <View style={styles.challengesSection}>
+              <View style={styles.challengesHeader}>
+                <Text style={styles.challengesTitle}>📩 Pending Challenges</Text>
+                <View style={styles.challengesBadge}>
+                  <Text style={styles.challengesBadgeText}>{pendingChallenges.length}</Text>
+                </View>
+              </View>
+              {pendingChallenges.map((partner) => (
+                <TouchableOpacity
+                  key={partner.partnerId}
+                  style={styles.challengeCard}
+                  onPress={() =>
+                    navigation.navigate("DailyChallenge", {
+                      partnerId: partner.partnerId,
+                      partnerName: partner.partnerName,
+                    })
+                  }
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.challengeCardContent}>
+                    <View style={styles.challengeAvatar}>
+                      <Text style={styles.challengeAvatarText}>{partner.partnerName.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.challengeInfo}>
+                      <Text style={styles.challengeName}>{partner.partnerName}</Text>
+                      <Text style={styles.challengeText}>Sent you a challenge!</Text>
+                    </View>
+                    <Text style={styles.challengeArrow}>→</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -248,5 +308,84 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     textAlign: "center",
     fontWeight: "600",
+  },
+  challengesSection: {
+    width: "100%",
+    marginBottom: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  challengesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  challengesTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  challengesBadge: {
+    backgroundColor: "#EF4444",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  challengesBadgeText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
+  challengeCard: {
+    backgroundColor: "#FEF3C7",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  challengeCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  challengeAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#A855F7",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  challengeAvatarText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  challengeInfo: {
+    flex: 1,
+  },
+  challengeName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 2,
+  },
+  challengeText: {
+    fontSize: 14,
+    color: "#92400E",
+    fontWeight: "600",
+  },
+  challengeArrow: {
+    fontSize: 20,
+    color: "#92400E",
+    fontWeight: "700",
   },
 })

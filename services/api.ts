@@ -1,7 +1,7 @@
 import axios from "axios"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const API_URL = "https://v0-know-me-better-y8fz.vercel.app/api"
+const API_URL = "https://wire-54408034f62c.herokuapp.com/api"
 
 const api = axios.create({
   baseURL: API_URL,

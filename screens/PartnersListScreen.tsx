@@ -12,6 +12,7 @@ interface Partner {
   gamesPlayed: number
   streak: number
   lastPlayed: string
+  hasPendingChallenge: boolean
 }
 
 export default function PartnersListScreen({ navigation }: any) {
@@ -61,9 +62,21 @@ export default function PartnersListScreen({ navigation }: any) {
       <View style={styles.partnerHeader}>
         <View style={styles.partnerAvatar}>
           <Text style={styles.partnerInitial}>{item.partnerName.charAt(0).toUpperCase()}</Text>
+          {item.hasPendingChallenge && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>!</Text>
+            </View>
+          )}
         </View>
         <View style={styles.partnerInfo}>
-          <Text style={styles.partnerName}>{item.partnerName}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.partnerName}>{item.partnerName}</Text>
+            {item.hasPendingChallenge && (
+              <View style={styles.challengeBadge}>
+                <Text style={styles.challengeBadgeText}>📩 Challenge</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.partnerEmail}>{item.partnerEmail}</Text>
         </View>
       </View>
@@ -211,20 +224,55 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    position: "relative",
   },
   partnerInitial: {
     fontSize: 24,
     fontWeight: "700",
     color: "#FFFFFF",
   },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#EF4444",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  notificationBadgeText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
   partnerInfo: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
   },
   partnerName: {
     fontSize: 20,
     fontWeight: "700",
     color: "#1F2937",
-    marginBottom: 4,
+  },
+  challengeBadge: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  challengeBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#92400E",
   },
   partnerEmail: {
     fontSize: 14,

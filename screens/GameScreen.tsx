@@ -1,19 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
+import { useState, useEffect, useCallback } from "react"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
-import Animated from "react-native-reanimated"
+import Animated, { FadeIn, SlideInUp } from "react-native-reanimated"
 import socketService from "../services/socket"
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
   },
   header: {
+    paddingTop: 60,
     paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingBottom: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    justifyContent: "center",
   },
   scoreContainer: {
     flexDirection: "row",
@@ -41,11 +50,6 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#FFFFFF",
     borderRadius: 8,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: "center",
   },
   questionCard: {
     backgroundColor: "#FFFFFF",
@@ -135,78 +139,232 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
   },
+  roleBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  answererBadge: {
+    backgroundColor: "#10B981",
+  },
+  guesserBadge: {
+    backgroundColor: "#F59E0B",
+  },
+  roleText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  instructionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 32,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.5,
+    shadowRadius: 30,
+    elevation: 20,
+  },
+  modalGradient: {
+    padding: 32,
+    alignItems: "center",
+  },
+  resultEmoji: {
+    fontSize: 80,
+    marginBottom: 16,
+  },
+  resultTitle: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  similarityBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginBottom: 24,
+  },
+  similarityText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  answersContainer: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+  },
+  answerBox: {
+    marginBottom: 16,
+  },
+  answerLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "rgba(255, 255, 255, 0.8)",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  answerText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    lineHeight: 22,
+  },
+  divider: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  dividerText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "rgba(255, 255, 255, 0.6)",
+  },
+  explanationBox: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+  },
+  explanationText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  continueButton: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  continueButtonText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#1F2937",
+  },
 })
 
 export default function GameScreen({ navigation, route }: any) {
-  const { roomCode, playerName, playerId, questions, currentRound: initialRound, theme } = route.params
+  const { roomCode, playerName, playerId, questions, currentRound: initialRound, theme, answerer } = route.params
 
   const [currentRound, setCurrentRound] = useState(initialRound || 0)
   const [currentScore, setCurrentScore] = useState(0)
   const [answer, setAnswer] = useState("")
   const [submitted, setSubmitted] = useState(false)
+  const [answerReady, setAnswerReady] = useState(false)
+  const [showResultModal, setShowResultModal] = useState(false)
+  const [resultData, setResultData] = useState<any>(null)
+
+  // Determine role once - this never changes during the game
+  const isAnswerer = playerId === answerer
 
   const question = questions[currentRound]
 
   useEffect(() => {
     setAnswer("")
     setSubmitted(false)
+    setAnswerReady(false)
   }, [currentRound])
 
+  const handleAnswerReady = useCallback((data: any) => {
+    if (!isAnswerer) {
+      setAnswerReady(true)
+    }
+  }, [isAnswerer])
+
+  const handleRoundComplete = useCallback((data: any) => {
+    const { actualAnswer, guess, isMatch, similarity, explanation, scores, answerer: answererId, guesser } = data
+
+    const newScore = playerId === "1" ? scores.player1 : scores.player2
+    setCurrentScore(newScore)
+
+    // Store result data and show modal
+    setResultData({
+      actualAnswer,
+      guess,
+      isMatch,
+      similarity,
+      explanation,
+      scores,
+      guesser,
+    })
+    setShowResultModal(true)
+  }, [playerId])
+
+  const handleGameOver = useCallback((data: any) => {
+    const { guesserScore, totalRounds, vibeAnalysis } = data
+
+    // Both players see the same score (how well the guesser did)
+    navigation.replace("Results", {
+      roomCode,
+      playerName,
+      score: guesserScore,
+      total: totalRounds,
+      vibeAnalysis,
+      theme: data.theme,
+      isAnswerer: isAnswerer,
+    })
+  }, [navigation, roomCode, playerName, isAnswerer])
+
+  const handleNextRound = useCallback((data: any) => {
+    const { currentRound: newRound } = data
+    setCurrentRound(newRound)
+  }, [])
+
   useEffect(() => {
-    const handleRoundComplete = (data: any) => {
-      const { player1Answer, player2Answer, isMatch, similarity, explanation, scores } = data
-
-      const newScore = playerId === "1" ? scores.player1 : scores.player2
-      setCurrentScore(newScore)
-
-      const matchMessage = isMatch
-        ? `Match! 🎉\n\nSimilarity: ${similarity}%\n${explanation}`
-        : `Different vibes\n\nSimilarity: ${similarity}%\n${explanation}`
-
-      Alert.alert(
-        matchMessage,
-        `You: ${playerId === "1" ? player1Answer : player2Answer}\nPartner: ${playerId === "1" ? player2Answer : player1Answer}`,
-        [
-          {
-            text: "Continue",
-            onPress: () => {
-              socketService.nextRound(roomCode)
-            },
-          },
-        ],
-      )
-    }
-
-    const handleGameOver = (data: any) => {
-      const { scores, totalRounds, vibeAnalysis } = data
-
-      const finalScore = playerId === "1" ? scores.player1 : scores.player2
-
-      navigation.replace("Results", {
-        roomCode,
-        playerName,
-        score: finalScore,
-        total: totalRounds,
-        vibeAnalysis,
-        theme: data.theme,
-      })
-    }
-
-    const handleNextRound = (data: any) => {
-      const { currentRound: newRound } = data
-      setCurrentRound(newRound)
-    }
-
+    socketService.onAnswerReady(handleAnswerReady)
     socketService.onRoundComplete(handleRoundComplete)
     socketService.onGameOver(handleGameOver)
     socketService.onNextRound(handleNextRound)
 
     return () => {
+      socketService.off("answer-ready")
       socketService.off("round-complete")
       socketService.off("game-over")
       socketService.off("next-round")
     }
-  }, [currentRound, navigation, roomCode, playerName, playerId, questions])
+  }, [handleAnswerReady, handleRoundComplete, handleGameOver, handleNextRound])
+
+  const handleContinue = () => {
+    setShowResultModal(false)
+    setResultData(null)
+    
+    // Only the guesser advances the round to prevent race conditions
+    if (resultData && playerId === resultData.guesser) {
+      socketService.nextRound(roomCode)
+    }
+  }
 
   const handleSubmit = () => {
     if (!answer.trim()) {
@@ -239,40 +397,181 @@ export default function GameScreen({ navigation, route }: any) {
         </View>
       </View>
 
-      <View style={styles.content}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.questionCard}>
-          <Text style={styles.emoji}>💭</Text>
+          <Text style={styles.emoji}>{isAnswerer ? "✍️" : "🎯"}</Text>
+          
+          {/* Role indicator */}
+          <View style={[styles.roleBadge, isAnswerer ? styles.answererBadge : styles.guesserBadge]}>
+            <Text style={styles.roleText}>
+              {isAnswerer ? "You're the Answerer" : "You're the Guesser"}
+            </Text>
+          </View>
+
           <Text style={styles.question}>{question}</Text>
 
-          {!submitted ? (
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Type your answer..."
-                placeholderTextColor="rgba(168, 85, 247, 0.4)"
-                value={answer}
-                onChangeText={setAnswer}
-                multiline
-                maxLength={200}
-                autoFocus
-              />
-              <TouchableOpacity
-                style={[styles.submitButton, !answer.trim() && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
-                disabled={!answer.trim()}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.submitButtonText}>Submit Answer ✨</Text>
-              </TouchableOpacity>
-            </View>
+          {isAnswerer ? (
+            // Answerer UI
+            !submitted ? (
+              <View style={styles.inputContainer}>
+                <Text style={styles.instructionText}>
+                  Answer this question honestly. Your partner will try to guess your answer!
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Type your answer..."
+                  placeholderTextColor="rgba(168, 85, 247, 0.4)"
+                  value={answer}
+                  onChangeText={setAnswer}
+                  multiline
+                  maxLength={200}
+                  autoFocus
+                />
+                <TouchableOpacity
+                  style={[styles.submitButton, !answer.trim() && styles.submitButtonDisabled]}
+                  onPress={handleSubmit}
+                  disabled={!answer.trim()}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.submitButtonText}>Submit Answer ✨</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.waitingContainer}>
+                <Text style={styles.waitingEmoji}>⏳</Text>
+                <Text style={styles.waitingText}>Waiting for your partner to guess...</Text>
+              </View>
+            )
           ) : (
-            <View style={styles.waitingContainer}>
-              <Text style={styles.waitingEmoji}>⏳</Text>
-              <Text style={styles.waitingText}>Checking answers...</Text>
-            </View>
+            // Guesser UI
+            !answerReady ? (
+              <View style={styles.waitingContainer}>
+                <Text style={styles.waitingEmoji}>⏳</Text>
+                <Text style={styles.waitingText}>Waiting for your partner to answer...</Text>
+              </View>
+            ) : !submitted ? (
+              <View style={styles.inputContainer}>
+                <Text style={styles.instructionText}>
+                  Your partner has answered! Try to guess what they said.
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Guess your partner's answer..."
+                  placeholderTextColor="rgba(168, 85, 247, 0.4)"
+                  value={answer}
+                  onChangeText={setAnswer}
+                  multiline
+                  maxLength={200}
+                  autoFocus
+                />
+                <TouchableOpacity
+                  style={[styles.submitButton, !answer.trim() && styles.submitButtonDisabled]}
+                  onPress={handleSubmit}
+                  disabled={!answer.trim()}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.submitButtonText}>Submit Guess 🎯</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.waitingContainer}>
+                <Text style={styles.waitingEmoji}>⏳</Text>
+                <Text style={styles.waitingText}>Checking your guess...</Text>
+              </View>
+            )
           )}
         </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Result Modal */}
+      <Modal
+        visible={showResultModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleContinue}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View 
+            entering={SlideInUp.duration(400)}
+            style={styles.modalContent}
+          >
+            <LinearGradient
+              colors={resultData?.isMatch ? ["#10B981", "#059669"] : ["#F59E0B", "#D97706"]}
+              style={styles.modalGradient}
+            >
+              {/* Result Icon */}
+              <Text style={styles.resultEmoji}>
+                {resultData?.isMatch ? "🎉" : "💭"}
+              </Text>
+
+              {/* Match Status */}
+              <Text style={styles.resultTitle}>
+                {resultData?.isMatch ? "Great Guess!" : "Not Quite!"}
+              </Text>
+
+              {/* Similarity Score */}
+              <View style={styles.similarityBadge}>
+                <Text style={styles.similarityText}>
+                  {resultData?.similarity}% Match
+                </Text>
+              </View>
+
+              {/* Answers Comparison */}
+              <View style={styles.answersContainer}>
+                <View style={styles.answerBox}>
+                  <Text style={styles.answerLabel}>
+                    {isAnswerer ? "Your Answer" : "Partner's Answer"}
+                  </Text>
+                  <Text style={styles.answerText}>
+                    {resultData?.actualAnswer}
+                  </Text>
+                </View>
+
+                <View style={styles.divider}>
+                  <Text style={styles.dividerText}>vs</Text>
+                </View>
+
+                <View style={styles.answerBox}>
+                  <Text style={styles.answerLabel}>
+                    {isAnswerer ? "Partner's Guess" : "Your Guess"}
+                  </Text>
+                  <Text style={styles.answerText}>
+                    {resultData?.guess}
+                  </Text>
+                </View>
+              </View>
+
+              {/* AI Explanation */}
+              <View style={styles.explanationBox}>
+                <Text style={styles.explanationText}>
+                  {resultData?.explanation}
+                </Text>
+              </View>
+
+              {/* Continue Button */}
+              <TouchableOpacity
+                style={styles.continueButton}
+                onPress={handleContinue}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.continueButtonText}>
+                  Continue to Next Round →
+                </Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </Animated.View>
+        </View>
+      </Modal>
     </LinearGradient>
   )
 }

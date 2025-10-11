@@ -1,10 +1,70 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Animated } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Animated, ScrollView } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { useAuth } from "../contexts/AuthContext"
 import socketService from "../services/socket"
+
+interface Theme {
+  id: string
+  name: string
+  emoji: string
+  colors: string[]
+  description: string
+}
+
+const themes: Theme[] = [
+  {
+    id: "Classic",
+    name: "Classic",
+    emoji: "🎯",
+    colors: ["#A855F7", "#EC4899"],
+    description: "Mixed random questions",
+  },
+  {
+    id: "Foodie Feels 🍕",
+    name: "Foodie Feels",
+    emoji: "🍕",
+    colors: ["#F59E0B", "#FBBF24"],
+    description: "All about food & flavors",
+  },
+  {
+    id: "Love & Affection ❤️",
+    name: "Love & Affection",
+    emoji: "❤️",
+    colors: ["#EC4899", "#F43F5E"],
+    description: "Romance & connection",
+  },
+  {
+    id: "Travel Goals ✈️",
+    name: "Travel Goals",
+    emoji: "✈️",
+    colors: ["#06B6D4", "#0EA5E9"],
+    description: "Adventures & destinations",
+  },
+  {
+    id: "Daily Habits ☕",
+    name: "Daily Habits",
+    emoji: "☕",
+    colors: ["#D4A574", "#C4B5A0"],
+    description: "Everyday routines",
+  },
+  {
+    id: "Childhood Memories 🧸",
+    name: "Childhood Memories",
+    emoji: "🧸",
+    colors: ["#C084FC", "#E9D5FF"],
+    description: "Nostalgic moments",
+  },
+  {
+    id: "Flirty Fun 😏🔥",
+    name: "Flirty Fun",
+    emoji: "😏",
+    colors: ["#DC2626", "#F87171"],
+    description: "Playful & spicy",
+  },
+]
 
 export default function JoinScreen({ navigation, route }: any) {
   const { mode } = route.params
@@ -13,6 +73,8 @@ export default function JoinScreen({ navigation, route }: any) {
 
   const [playerName, setPlayerName] = useState(user?.name || "")
   const [roomCode, setRoomCode] = useState("")
+  const [selectedTheme, setSelectedTheme] = useState<string | null>("Classic")
+  const [selectedRole, setSelectedRole] = useState<"answerer" | "guesser">("answerer")
   const [loading, setLoading] = useState(false)
   const fadeAnim = useRef(new Animated.Value(0)).current
 
@@ -24,28 +86,33 @@ export default function JoinScreen({ navigation, route }: any) {
       useNativeDriver: true,
     }).start()
 
-    socketService.onRoomCreated((data) => {
-      console.log("[v0] Room created:", data)
-      setLoading(false)
-      navigation.navigate("Waiting", {
-        roomCode: data.roomCode,
-        playerName: data.player.name,
-        playerId: data.player.id,
-        isHost: true,
+    // Only listen for room-created if we're creating a room
+    if (isCreating) {
+      socketService.onRoomCreated((data) => {
+        console.log("[v0] Room created:", data)
+        setLoading(false)
+        navigation.navigate("Waiting", {
+          roomCode: data.roomCode,
+          playerName: data.player.name,
+          playerId: data.player.id,
+          isHost: true,
+          selectedTheme: selectedTheme,
+        })
       })
-    })
-
-    socketService.onPlayerJoined((data) => {
-      console.log("[v0] Player joined:", data)
-      setLoading(false)
-      const currentPlayer = data.player
-      navigation.navigate("Waiting", {
-        roomCode: roomCode.toUpperCase(),
-        playerName: currentPlayer.name,
-        playerId: currentPlayer.id,
-        isHost: false,
+    } else {
+      // Only listen for player-joined if we're joining a room
+      socketService.onPlayerJoined((data) => {
+        console.log("[v0] Player joined:", data)
+        setLoading(false)
+        const currentPlayer = data.player
+        navigation.navigate("Waiting", {
+          roomCode: roomCode.toUpperCase(),
+          playerName: currentPlayer.name,
+          playerId: currentPlayer.id,
+          isHost: false,
+        })
       })
-    })
+    }
 
     socketService.onError((error) => {
       console.error("[v0] Socket error:", error)
@@ -58,7 +125,7 @@ export default function JoinScreen({ navigation, route }: any) {
       socketService.off("player-joined")
       socketService.off("error")
     }
-  }, [roomCode])
+  }, [roomCode, isCreating])
 
   const handleSubmit = () => {
     if (!playerName.trim()) {
@@ -71,10 +138,15 @@ export default function JoinScreen({ navigation, route }: any) {
       return
     }
 
+    if (isCreating && !selectedTheme) {
+      Alert.alert("Select Theme", "Please choose a theme for your game")
+      return
+    }
+
     setLoading(true)
 
     if (isCreating) {
-      socketService.createRoom(playerName.trim(), user?.id)
+      socketService.createRoom(playerName.trim(), user?.id, selectedTheme!, selectedRole)
     } else {
       socketService.joinRoom(roomCode.toUpperCase().trim(), playerName.trim(), user?.id)
     }
@@ -82,15 +154,23 @@ export default function JoinScreen({ navigation, route }: any) {
 
   return (
     <LinearGradient colors={["#FF6B9D", "#A855F7", "#06B6D4"]} style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+        <Animated.View style={[styles.headerContent, { opacity: fadeAnim }]}>
+          <Text style={styles.emoji}>{isCreating ? "🎮" : "🔗"}</Text>
+          <Text style={styles.title}>{isCreating ? "Create Room" : "Join Room"}</Text>
+          <Text style={styles.subtitle}>{isCreating ? "Start a new game session" : "Enter your room code"}</Text>
+        </Animated.View>
+      </View>
 
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        <Text style={styles.emoji}>{isCreating ? "🎮" : "🔗"}</Text>
-        <Text style={styles.title}>{isCreating ? "Create Room" : "Join Room"}</Text>
-        <Text style={styles.subtitle}>{isCreating ? "Start a new game session" : "Enter your room code"}</Text>
-
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.formCard}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Your Name</Text>
@@ -122,18 +202,110 @@ export default function JoinScreen({ navigation, route }: any) {
             </View>
           )}
 
+          {isCreating && (
+            <>
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Your Role 🎭</Text>
+                <Text style={styles.roleDescription}>
+                  Choose whether you want to answer questions or guess your partner's answers
+                </Text>
+                <View style={styles.roleSelector}>
+                  <TouchableOpacity
+                    style={[
+                      styles.roleOption,
+                      selectedRole === "answerer" && styles.roleOptionSelected
+                    ]}
+                    onPress={() => setSelectedRole("answerer")}
+                    activeOpacity={0.8}
+                    disabled={loading}
+                  >
+                    <Text style={styles.roleEmoji}>✍️</Text>
+                    <Text style={[
+                      styles.roleTitle,
+                      selectedRole === "answerer" && styles.roleTextSelected
+                    ]}>
+                      Answerer
+                    </Text>
+                    <Text style={styles.roleSubtext}>
+                      You answer questions honestly
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.roleOption,
+                      selectedRole === "guesser" && styles.roleOptionSelected
+                    ]}
+                    onPress={() => setSelectedRole("guesser")}
+                    activeOpacity={0.8}
+                    disabled={loading}
+                  >
+                    <Text style={styles.roleEmoji}>🎯</Text>
+                    <Text style={[
+                      styles.roleTitle,
+                      selectedRole === "guesser" && styles.roleTextSelected
+                    ]}>
+                      Guesser
+                    </Text>
+                    <Text style={styles.roleSubtext}>
+                      You guess your partner's answers
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Choose Theme ✨</Text>
+                <ScrollView 
+                  style={styles.themesScrollView} 
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                >
+                  {themes.map((theme) => (
+                    <TouchableOpacity
+                      key={theme.id}
+                      style={[
+                        styles.themeCard,
+                        selectedTheme === theme.id && styles.themeCardSelected
+                      ]}
+                      onPress={() => setSelectedTheme(theme.id)}
+                      activeOpacity={0.8}
+                      disabled={loading}
+                    >
+                      <LinearGradient colors={theme.colors} style={styles.themeGradient}>
+                        <Text style={styles.themeEmoji}>{theme.emoji}</Text>
+                        <View style={styles.themeInfo}>
+                          <Text style={styles.themeName}>{theme.name}</Text>
+                          <Text style={styles.themeDescription}>{theme.description}</Text>
+                        </View>
+                        {selectedTheme === theme.id && (
+                          <View style={styles.checkmark}>
+                            <Text style={styles.checkmarkText}>✓</Text>
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </>
+          )}
+
           <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            style={[
+              styles.submitButton, 
+              (loading || (isCreating && !selectedTheme)) && styles.submitButtonDisabled
+            ]}
             onPress={handleSubmit}
             activeOpacity={0.8}
-            disabled={loading}
+            disabled={loading || (isCreating && !selectedTheme)}
           >
             <Text style={styles.submitButtonText}>
               {loading ? "Connecting..." : isCreating ? "Create Room 🚀" : "Join Game 💫"}
             </Text>
           </TouchableOpacity>
         </View>
-      </Animated.View>
+      </ScrollView>
     </LinearGradient>
   )
 }
@@ -141,45 +313,52 @@ export default function JoinScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
     paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 24,
   },
   backButton: {
-    position: "absolute",
-    top: 60,
-    left: 24,
-    zIndex: 10,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
+    alignSelf: "flex-start",
+    marginBottom: 16,
   },
   backButtonText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",
   },
-  content: {
-    flex: 1,
+  headerContent: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
   },
   emoji: {
-    fontSize: 72,
-    marginBottom: 16,
+    fontSize: 56,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "900",
     color: "#FFFFFF",
-    marginBottom: 8,
+    marginBottom: 4,
     letterSpacing: -1,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: "rgba(255, 255, 255, 0.9)",
-    marginBottom: 32,
     fontWeight: "500",
+    textAlign: "center",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   formCard: {
     width: "100%",
@@ -193,7 +372,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
@@ -239,5 +418,99 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "800",
+  },
+  themesScrollView: {
+    maxHeight: 160,
+    marginTop: 8,
+  },
+  themeCard: {
+    marginBottom: 8,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  themeCardSelected: {
+    borderColor: "#A855F7",
+  },
+  themeGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+  },
+  themeEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  themeInfo: {
+    flex: 1,
+  },
+  themeName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 2,
+  },
+  themeDescription: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.9)",
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkmarkText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#10B981",
+  },
+  roleDescription: {
+    fontSize: 11,
+    color: "#6B7280",
+    marginBottom: 8,
+    textAlign: "center",
+    lineHeight: 14,
+  },
+  roleSelector: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4,
+  },
+  roleOption: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#E9D5FF",
+  },
+  roleOptionSelected: {
+    borderColor: "#A855F7",
+    backgroundColor: "#F3E8FF",
+  },
+  roleEmoji: {
+    fontSize: 28,
+    marginBottom: 6,
+  },
+  roleTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#6B7280",
+    marginBottom: 2,
+  },
+  roleTextSelected: {
+    color: "#A855F7",
+  },
+  roleSubtext: {
+    fontSize: 11,
+    color: "#9CA3AF",
+    textAlign: "center",
+    lineHeight: 14,
   },
 })

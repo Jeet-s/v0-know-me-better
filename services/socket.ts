@@ -1,6 +1,6 @@
 import { io, type Socket } from "socket.io-client"
 
-const SOCKET_URL = "https://v0-know-me-better-y8fz.vercel.app"
+const SOCKET_URL = "https://wire-54408034f62c.herokuapp.com/"
 
 interface RoundCompleteData {
   player1Answer: string
@@ -64,8 +64,8 @@ class SocketService {
   }
 
   // Room management
-  createRoom(playerName: string, userId?: string) {
-    this.socket?.emit("create-room", { playerName, userId })
+  createRoom(playerName: string, userId?: string, theme?: string, role?: "answerer" | "guesser") {
+    this.socket?.emit("create-room", { playerName, userId, theme, role })
   }
 
   joinRoom(roomCode: string, playerName: string, userId?: string) {
@@ -89,6 +89,10 @@ class SocketService {
     this.socket?.emit("theme-selected", { roomCode, theme })
   }
 
+  getRoomState(roomCode: string) {
+    this.socket?.emit("get-room-state", { roomCode })
+  }
+
   // Event listeners with proper typing
   onRoomCreated(callback: (data: any) => void) {
     this.socket?.on("room-created", callback)
@@ -104,6 +108,10 @@ class SocketService {
 
   onPlayerAnswered(callback: (data: any) => void) {
     this.socket?.on("player-answered", callback)
+  }
+
+  onAnswerReady(callback: (data: any) => void) {
+    this.socket?.on("answer-ready", callback)
   }
 
   onRoundComplete(callback: (data: RoundCompleteData) => void) {
@@ -128,6 +136,10 @@ class SocketService {
 
   onThemeSelected(callback: (data: { theme: string }) => void) {
     this.socket?.on("theme-selected", callback)
+  }
+
+  onRoomState(callback: (data: { players: any[]; theme?: string; gameStarted: boolean }) => void) {
+    this.socket?.on("room-state", callback)
   }
 
   // Remove listeners
