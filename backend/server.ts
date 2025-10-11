@@ -411,7 +411,9 @@ io.on("connection", (socket) => {
 
           // Award points to the guesser if they got it right
           if (matchResult.isMatch) {
-            if (playerId === "1") {
+            // Determine who the guesser is (opposite of answerer)
+            const guesserPlayerId = room.answerer === "1" ? "2" : "1"
+            if (guesserPlayerId === "1") {
               room.scores.player1++
             } else {
               room.scores.player2++
@@ -459,13 +461,19 @@ io.on("connection", (socket) => {
         }
       }
 
-      console.log("[v0] Game over in room:", roomCode)
+      // Calculate the guesser's score (how many they got right)
+      const guesserPlayerId = room.answerer === "1" ? "2" : "1"
+      const guesserScore = guesserPlayerId === "1" ? room.scores.player1 : room.scores.player2
+
+      console.log("[v0] Game over in room:", roomCode, "Guesser score:", guesserScore)
       io.to(roomCode).emit("game-over", {
         scores: room.scores,
         totalRounds: room.questions.length,
         vibeAnalysis,
         matchExplanations: room.matchExplanations,
         theme: room.theme,
+        guesserScore: guesserScore, // Send the actual score
+        answerer: room.answerer,
       })
     } else {
       // Next round
