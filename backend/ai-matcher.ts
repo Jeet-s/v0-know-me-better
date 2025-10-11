@@ -1,4 +1,5 @@
 import { generateText } from "ai"
+import { openai } from "@ai-sdk/openai"
 
 interface MatchResult {
   isMatch: boolean
@@ -15,7 +16,7 @@ export async function analyzeAnswerMatch(
 ): Promise<MatchResult> {
   try {
     const { text } = await generateText({
-      model: ("openai/gpt-4o-mini" as unknown) as any,
+      model: openai("gpt-4o-mini"),
       prompt: `You are analyzing answers from a couples compatibility game.
 
 Question: "${question}"
@@ -61,7 +62,7 @@ export async function generateVibeAnalysis(
     const matchPercentage = Math.round((scores.player1 / totalRounds) * 100)
 
     const { text } = await generateText({
-      model: ("openai/gpt-4o-mini" as unknown) as any,
+      model: openai("gpt-4o-mini"),
       prompt: `You are analyzing a couple's compatibility based on their game results.
 
 ${player1Name} and ${player2Name} matched on ${scores.player1} out of ${totalRounds} questions (${matchPercentage}%).
