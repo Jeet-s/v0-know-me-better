@@ -48,12 +48,13 @@ interface GameRoom {
   players: Player[]
   questions: string[]
   currentRound: number
-  answers: Map<string, { player1?: string; player2?: string }>
+  answers: Map<string, { answerer?: string; guesser?: string; actualAnswer?: string }>
   scores: { player1: number; player2: number }
   gameStarted: boolean
   matchExplanations: string[]
   disconnectedPlayers: Map<string, { player: Player; disconnectTime: number }>
   theme?: string
+  answerer: "1" | "2" // Who is always the answerer (host)
 }
 
 const rooms = new Map<string, GameRoom>()
@@ -151,11 +152,11 @@ async function saveGameToDatabase(room: GameRoom) {
     const roundKey = `round-${i}`
     const answers = room.answers.get(roundKey)
 
-    if (answers?.player1 && answers?.player2) {
+    if (answers?.actualAnswer && answers?.guesser) {
       relation.history.push({
         question: room.questions[i],
-        answerA: answers.player1,
-        answerB: answers.player2,
+        answerA: answers.actualAnswer,
+        answerB: answers.guesser,
         verdict: room.matchExplanations[i]?.includes("match") ? "Matched" : "Not Matched",
         resultText: room.matchExplanations[i] || "",
         date: new Date(),
@@ -205,7 +206,7 @@ io.on("connection", (socket) => {
   console.log("[v0] User connected:", socket.id)
 
   // Create a new game room
-  socket.on("create-room", (data: { playerName: string; userId?: string; theme?: string }) => {
+  socket.on("create-room", (data: { playerName: string; userId?: string; theme?: string; role?: "answerer" | "guesser" }) => {
     console.log("[v0] Creating room:", data)
     const roomCode = generateRoomCode()
     const player: Player = {
@@ -215,6 +216,9 @@ io.on("connection", (socket) => {
       isHost: true,
       userId: data.userId,
     }
+
+    // If host chooses to be guesser, player 2 will be the answerer
+    const answerer = data.role === "guesser" ? "2" : "1"
 
     const room: GameRoom = {
       code: roomCode,
@@ -227,12 +231,13 @@ io.on("connection", (socket) => {
       matchExplanations: [],
       disconnectedPlayers: new Map(),
       theme: data.theme,
+      answerer: answerer,
     }
 
     rooms.set(roomCode, room)
     socket.join(roomCode)
 
-    console.log("[v0] Room created:", roomCode, "with theme:", data.theme)
+    console.log("[v0] Room created:", roomCode, "with theme:", data.theme, "answerer:", answerer)
     socket.emit("room-created", { roomCode, player })
   })
 
@@ -355,10 +360,11 @@ io.on("connection", (socket) => {
       questions: room.questions,
       currentRound: room.currentRound,
       theme: room.theme,
+      answerer: room.answerer,
     })
   })
 
-  // Submit an answer
+  // Submit an answer or guess
   socket.on(
     "submit-answer",
     async ({ roomCode, playerId, answer }: { roomCode: string; playerId: string; answer: string }) => {
@@ -371,49 +377,63 @@ io.on("connection", (socket) => {
       }
 
       const roundAnswers = room.answers.get(roundKey)!
-      if (playerId === "1") {
-        roundAnswers.player1 = answer
-      } else {
-        roundAnswers.player2 = answer
-      }
+      const isAnswerer = playerId === room.answerer
 
-      console.log("[v0] Answer submitted:", { roomCode, playerId, answer })
-
-      // Notify the other player that this player has answered
-      socket.to(roomCode).emit("player-answered", { playerId })
-
-      // Check if both players have answered
-      if (roundAnswers.player1 && roundAnswers.player2) {
-        const currentQuestion = room.questions[room.currentRound]
-        const player1Name = room.players[0].name
-        const player2Name = room.players[1].name
-
-        const matchResult = await analyzeAnswerMatch(
-          currentQuestion,
-          roundAnswers.player1,
-          roundAnswers.player2,
-          player1Name,
-          player2Name,
-        )
-
-        if (matchResult.isMatch) {
-          room.scores.player1++
-          room.scores.player2++
-        }
-
-        room.matchExplanations.push(matchResult.explanation)
-
-        console.log("[v0] AI match result:", matchResult)
-
-        // Send results to both players
-        io.to(roomCode).emit("round-complete", {
-          player1Answer: roundAnswers.player1,
-          player2Answer: roundAnswers.player2,
-          isMatch: matchResult.isMatch,
-          similarity: matchResult.similarity,
-          explanation: matchResult.explanation,
-          scores: room.scores,
+      if (isAnswerer) {
+        // This player is providing the actual answer
+        roundAnswers.actualAnswer = answer
+        roundAnswers.answerer = answer
+        console.log("[v0] Answer provided:", { roomCode, playerId, answer })
+        
+        // Notify the guesser that the answer is ready
+        socket.to(roomCode).emit("answer-ready", { 
+          answerer: room.answerer,
+          question: room.questions[room.currentRound]
         })
+      } else {
+        // This player is guessing
+        roundAnswers.guesser = answer
+        console.log("[v0] Guess submitted:", { roomCode, playerId, answer })
+        
+        // Check if we have both answer and guess
+        if (roundAnswers.actualAnswer && roundAnswers.guesser) {
+          const currentQuestion = room.questions[room.currentRound]
+          const answererName = room.players[parseInt(room.answerer) - 1].name
+          const guesserName = room.players[parseInt(playerId) - 1].name
+
+          const matchResult = await analyzeAnswerMatch(
+            currentQuestion,
+            roundAnswers.actualAnswer,
+            roundAnswers.guesser,
+            answererName,
+            guesserName,
+          )
+
+          // Award points to the guesser if they got it right
+          if (matchResult.isMatch) {
+            if (playerId === "1") {
+              room.scores.player1++
+            } else {
+              room.scores.player2++
+            }
+          }
+
+          room.matchExplanations.push(matchResult.explanation)
+
+          console.log("[v0] AI match result:", matchResult)
+
+          // Send results to both players
+          io.to(roomCode).emit("round-complete", {
+            actualAnswer: roundAnswers.actualAnswer,
+            guess: roundAnswers.guesser,
+            isMatch: matchResult.isMatch,
+            similarity: matchResult.similarity,
+            explanation: matchResult.explanation,
+            scores: room.scores,
+            answerer: room.answerer,
+            guesser: playerId,
+          })
+        }
       }
     },
   )
