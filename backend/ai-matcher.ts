@@ -1,10 +1,20 @@
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import OpenAI from "openai"
 
 interface MatchResult {
   isMatch: boolean
   similarity: number
   explanation: string
+}
+
+let openaiClient: OpenAI | null = null
+
+function getOpenAIClient(): OpenAI {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  }
+  return openaiClient
 }
 
 export async function analyzeAnswerMatch(
@@ -15,38 +25,48 @@ export async function analyzeAnswerMatch(
   player2Name: string,
 ): Promise<MatchResult> {
   try {
-    const { text } = await generateText({
-      model: openai("gpt-4o-mini"),
-      prompt: `You are analyzing answers from a couples compatibility game.
+    const openai = getOpenAIClient()
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a fun, playful AI that analyzes couple compatibility. Keep explanations SHORT (max 10 words), casual, and fun. Always respond with valid JSON only.",
+        },
+        {
+          role: "user",
+          content: `Analyze these answers from a couples compatibility game:
 
 Question: "${question}"
 ${player1Name}'s answer: "${answer1}"
 ${player2Name}'s answer: "${answer2}"
 
-Analyze if these answers show compatibility and alignment between the couple. Consider:
+Consider:
 - Semantic similarity (same meaning, different words)
 - Complementary answers (different but compatible)
 - Shared values or preferences
 - Overall vibe and energy match
 
-Respond in this exact JSON format:
-{
-  "isMatch": true/false,
-  "similarity": 0-100,
-  "explanation": "Brief explanation of why they match or don't match"
-}
-
-Be generous with matches - couples don't need identical answers to be compatible. Look for alignment in spirit, values, and overall vibe.`,
+Respond with JSON containing: isMatch (boolean), similarity (0-100 number), explanation (string with MAX 10 words - be playful and concise!).
+Be generous with matches - couples don't need identical answers to be compatible.`,
+        },
+      ],
+      response_format: { type: "json_object" },
     })
 
-    const result = JSON.parse(text) as MatchResult
+    const content = response.choices[0].message.content
+    if (!content) {
+      throw new Error("OpenAI returned empty response")
+    }
+
+    const result = JSON.parse(content) as MatchResult
     return result
   } catch (error) {
     console.error("[v0] AI matching error:", error)
     // Fallback to simple matching
     return {
       isMatch: answer1.toLowerCase().trim() === answer2.toLowerCase().trim(),
-      similarity: 50,
+      similarity: answer1.toLowerCase().trim() === answer2.toLowerCase().trim() ? 100 : 0,
       explanation: "Using fallback matching due to AI error",
     }
   }
@@ -60,12 +80,18 @@ export async function generateVibeAnalysis(
 ): Promise<string> {
   try {
     const matchPercentage = Math.round((scores.player1 / totalRounds) * 100)
+    const openai = getOpenAIClient()
 
-    const { text } = await generateText({
-      model: openai("gpt-4o-mini"),
-      prompt: `You are analyzing a couple's compatibility based on their game results.
-
-${player1Name} and ${player2Name} matched on ${scores.player1} out of ${totalRounds} questions (${matchPercentage}%).
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a fun, playful relationship analyst who creates encouraging vibe analyses for couples.",
+        },
+        {
+          role: "user",
+          content: `${player1Name} and ${player2Name} matched on ${scores.player1} out of ${totalRounds} questions (${matchPercentage}%).
 
 Generate a fun, playful, and encouraging vibe analysis (2-3 sentences) that:
 - Celebrates their connection
@@ -74,9 +100,11 @@ Generate a fun, playful, and encouraging vibe analysis (2-3 sentences) that:
 - Gives them a creative "vibe" label (like "Cosmic Soulmates", "Adventure Twins", "Cozy Companions", etc.)
 
 Keep it upbeat and fun!`,
+        },
+      ],
     })
 
-    return text
+    return response.choices[0].message.content || "You two have an amazing connection! 💖"
   } catch (error) {
     console.error("[v0] Vibe analysis error:", error)
     const matchPercentage = Math.round((scores.player1 / totalRounds) * 100)

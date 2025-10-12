@@ -4,10 +4,10 @@
     "slug": "know-me-better",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": null,
+    "icon": "./icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": null,
+      "image": "./icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF5F7"
     },
@@ -20,13 +20,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": null,
+        "foregroundImage": "./icon.png",
         "backgroundColor": "#FFF5F7"
       },
-      "package": "com.knowmebetter.app"
+      "package": "com.knowmebetter.app",
+      "versionCode": 1,
+      "targetSdkVersion": 35,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
-      "favicon": null
+      "favicon": "./icon.png"
     },
     "extra": {
       "eas": {
